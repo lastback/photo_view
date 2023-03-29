@@ -249,6 +249,7 @@ class PhotoView extends StatefulWidget {
     this.initialScale,
     this.basePosition,
     this.scaleStateCycle,
+    this.onTapOutside,
     this.onTapUp,
     this.onTapDown,
     this.onScaleEnd,
@@ -285,6 +286,7 @@ class PhotoView extends StatefulWidget {
     this.initialScale,
     this.basePosition,
     this.scaleStateCycle,
+    this.onTapOutside,
     this.onTapUp,
     this.onTapDown,
     this.onScaleEnd,
@@ -309,7 +311,7 @@ class PhotoView extends StatefulWidget {
   final LoadingBuilder? loadingBuilder;
 
   /// Show loadFailedChild when the image failed to load
-  final ImageErrorWidgetBuilder? errorBuilder;
+  final ImageErrorWidgetBuilderWithReload? errorBuilder;
 
   /// Changes the background behind image, defaults to `Colors.black`.
   final BoxDecoration? backgroundDecoration;
@@ -370,6 +372,9 @@ class PhotoView extends StatefulWidget {
 
   /// Defines de next [PhotoViewScaleState] given the actual one. Default is [defaultScaleStateCycle]
   final ScaleStateCycle? scaleStateCycle;
+
+  /// 点击图片空白区域
+  final void Function()? onTapOutside;
 
   /// A pointer that will trigger a tap has stopped contacting the screen at a
   /// particular location.
@@ -536,6 +541,7 @@ class _PhotoViewState extends State<PhotoView>
                 initialScale: widget.initialScale,
                 basePosition: widget.basePosition,
                 scaleStateCycle: widget.scaleStateCycle,
+                onTapOutside: widget.onTapOutside,
                 onTapUp: widget.onTapUp,
                 onTapDown: widget.onTapDown,
                 onScaleEnd: widget.onScaleEnd,
@@ -604,4 +610,11 @@ typedef PhotoViewImageScaleEndCallback = Function(
 typedef LoadingBuilder = Widget Function(
   BuildContext context,
   ImageChunkEvent? event,
+);
+
+typedef ImageErrorWidgetBuilderWithReload = Widget Function(
+  BuildContext context,
+  Object? error,
+  StackTrace? stackTrace,
+  Function? reload,
 );

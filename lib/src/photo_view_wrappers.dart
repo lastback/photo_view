@@ -22,6 +22,7 @@ class ImageWrapper extends StatefulWidget {
     required this.initialScale,
     required this.basePosition,
     required this.scaleStateCycle,
+    required this.onTapOutside,
     required this.onTapUp,
     required this.onTapDown,
     required this.onScaleEnd,
@@ -36,7 +37,7 @@ class ImageWrapper extends StatefulWidget {
 
   final ImageProvider imageProvider;
   final LoadingBuilder? loadingBuilder;
-  final ImageErrorWidgetBuilder? errorBuilder;
+  final ImageErrorWidgetBuilderWithReload? errorBuilder;
   final BoxDecoration backgroundDecoration;
   final bool gaplessPlayback;
   final PhotoViewHeroAttributes? heroAttributes;
@@ -49,6 +50,9 @@ class ImageWrapper extends StatefulWidget {
   final PhotoViewScaleStateController scaleStateController;
   final Alignment? basePosition;
   final ScaleStateCycle? scaleStateCycle;
+
+  /// 点击图片空白区域
+  final void Function()? onTapOutside;
   final PhotoViewImageTapUpCallback? onTapUp;
   final PhotoViewImageTapDownCallback? onTapDown;
   final PhotoViewImageScaleEndCallback? onScaleEnd;
@@ -101,6 +105,19 @@ class _ImageWrapperState extends State<ImageWrapper> {
     _updateSourceStream(newStream);
   }
 
+  void _reloadImage() async {
+    setState(() {
+      _loading = true;
+      _lastException = null;
+      _lastStack = null;
+    });
+    //移除图片
+    await widget.imageProvider.evict();
+    //延迟2s后重新加载图片
+    await Future.delayed(Duration(seconds: 1));
+    _resolveImage();
+  }
+
   ImageStreamListener _getOrCreateListener() {
     void handleImageChunk(ImageChunkEvent event) {
       setState(() {
@@ -125,7 +142,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
       synchronousCall ? setupCB() : setState(setupCB);
     }
 
-    void handleError(dynamic error, StackTrace? stackTrace) {
+    void handleError(dynamic error, StackTrace? stackTrace) async {
       setState(() {
         _loading = false;
         _lastException = error;
@@ -148,7 +165,8 @@ class _ImageWrapperState extends State<ImageWrapper> {
 
   void _updateSourceStream(ImageStream newStream) {
     if (_imageStream?.key == newStream.key) {
-      return;
+      ///为了可以reload图片
+      // return;
     }
     _imageStream?.removeListener(_imageStreamListener!);
     _imageStream = newStream;
@@ -161,14 +179,13 @@ class _ImageWrapperState extends State<ImageWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return _buildLoading(context);
-    }
-
     if (_lastException != null) {
       return _buildError(context);
     }
 
+    if (_loading) {
+      return _buildLoading(context);
+    }
     final scaleBoundaries = ScaleBoundaries(
       widget.minScale ?? 0.0,
       widget.maxScale ?? double.infinity,
@@ -188,6 +205,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
       scaleStateController: widget.scaleStateController,
       scaleStateCycle: widget.scaleStateCycle ?? defaultScaleStateCycle,
       scaleBoundaries: scaleBoundaries,
+      onTapOutside: widget.onTapOutside,
       onTapUp: widget.onTapUp,
       onTapDown: widget.onTapDown,
       onScaleEnd: widget.onScaleEnd,
@@ -213,7 +231,17 @@ class _ImageWrapperState extends State<ImageWrapper> {
     BuildContext context,
   ) {
     if (widget.errorBuilder != null) {
-      return widget.errorBuilder!(context, _lastException!, _lastStack);
+      return GestureDetector(
+        onTap: widget.onTapOutside,
+        child: Container(
+          decoration: BoxDecoration(),
+          alignment: Alignment.center,
+          child: Container(
+            alignment: Alignment.center,
+            child: widget.errorBuilder!(context, _lastException, _lastStack, _reloadImage),
+          ),
+        ),
+      );
     }
     return PhotoViewDefaultError(
       decoration: widget.backgroundDecoration,

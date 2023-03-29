@@ -28,6 +28,7 @@ class PhotoViewCore extends StatefulWidget {
     required this.gaplessPlayback,
     required this.heroAttributes,
     required this.enableRotation,
+    required this.onTapOutside,
     required this.onTapUp,
     required this.onTapDown,
     required this.onScaleEnd,
@@ -50,6 +51,7 @@ class PhotoViewCore extends StatefulWidget {
     required this.backgroundDecoration,
     this.heroAttributes,
     required this.enableRotation,
+    this.onTapOutside,
     this.onTapUp,
     this.onTapDown,
     this.onScaleEnd,
@@ -80,6 +82,8 @@ class PhotoViewCore extends StatefulWidget {
   final ScaleStateCycle scaleStateCycle;
   final Alignment basePosition;
 
+  /// 点击图片空白区域
+  final void Function()? onTapOutside;
   final PhotoViewImageTapUpCallback? onTapUp;
   final PhotoViewImageTapDownCallback? onTapDown;
   final PhotoViewImageScaleEndCallback? onScaleEnd;
@@ -341,19 +345,27 @@ class PhotoViewCoreState extends State<PhotoViewCore>
               return child;
             }
 
-            return PhotoViewGestureDetector(
-              child: child,
-              onDoubleTap: nextScaleState,
-              onScaleStart: onScaleStart,
-              onScaleUpdate: onScaleUpdate,
-              onScaleEnd: onScaleEnd,
-              hitDetector: this,
-              onTapUp: widget.onTapUp != null
-                  ? (details) => widget.onTapUp!(context, details, value)
-                  : null,
-              onTapDown: widget.onTapDown != null
-                  ? (details) => widget.onTapDown!(context, details, value)
-                  : null,
+            return GestureDetector(
+              onTap: widget.onTapOutside,
+              child: Container(
+                decoration: BoxDecoration(),
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: PhotoViewGestureDetector(
+                      child: child,
+                      onDoubleTap: nextScaleState,
+                      onScaleStart: onScaleStart,
+                      onScaleUpdate: onScaleUpdate,
+                      onScaleEnd: onScaleEnd,
+                      hitDetector: this,
+                      onTapUp: widget.onTapUp != null ? (details) => widget.onTapUp!(context, details, value) : null,
+                      onTapDown: widget.onTapDown != null ? (details) => widget.onTapDown!(context, details, value) : null,
+                    ),
+                  ),
+                ),
+              ),
             );
           } else {
             return Container();

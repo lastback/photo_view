@@ -9,7 +9,8 @@ import 'package:photo_view/photo_view.dart'
         PhotoViewImageTapDownCallback,
         PhotoViewImageTapUpCallback,
         PhotoViewImageScaleEndCallback,
-        ScaleStateCycle;
+        ScaleStateCycle,
+        ImageErrorWidgetBuilderWithReload;
 
 import 'package:photo_view/src/controller/photo_view_controller.dart';
 import 'package:photo_view/src/controller/photo_view_scalestate_controller.dart';
@@ -288,6 +289,7 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
             minScale: pageOption.minScale,
             maxScale: pageOption.maxScale,
             scaleStateCycle: pageOption.scaleStateCycle,
+            onTapOutside: pageOption.onTapOutside,
             onTapUp: pageOption.onTapUp,
             onTapDown: pageOption.onTapDown,
             onScaleEnd: pageOption.onScaleEnd,
@@ -329,6 +331,7 @@ class PhotoViewGalleryPageOptions {
     this.scaleStateController,
     this.basePosition,
     this.scaleStateCycle,
+    this.onTapOutside,
     this.onTapUp,
     this.onTapDown,
     this.onScaleEnd,
@@ -352,6 +355,7 @@ class PhotoViewGalleryPageOptions {
     this.scaleStateController,
     this.basePosition,
     this.scaleStateCycle,
+    this.onTapOutside,
     this.onTapUp,
     this.onTapDown,
     this.onScaleEnd,
@@ -395,6 +399,9 @@ class PhotoViewGalleryPageOptions {
   /// Mirror to [PhotoView.scaleStateCycle]
   final ScaleStateCycle? scaleStateCycle;
 
+  /// 点击图片空白区域
+  final void Function()? onTapOutside;
+
   /// Mirror to [PhotoView.onTapUp]
   final PhotoViewImageTapUpCallback? onTapUp;
 
@@ -417,5 +424,5 @@ class PhotoViewGalleryPageOptions {
   final FilterQuality? filterQuality;
 
   /// Mirror to [PhotoView.errorBuilder]
-  final ImageErrorWidgetBuilder? errorBuilder;
+  final ImageErrorWidgetBuilderWithReload? errorBuilder;
 }
