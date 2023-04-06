@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:photo_view/photo_view.dart'
     show
@@ -23,7 +24,8 @@ const _defaultDecoration = const BoxDecoration(
 class PhotoViewCore extends StatefulWidget {
   const PhotoViewCore({
     Key? key,
-    required this.imageProvider,
+    required this.imageContainer,
+    required this.transform,
     required this.backgroundDecoration,
     required this.gaplessPlayback,
     required this.heroAttributes,
@@ -65,12 +67,14 @@ class PhotoViewCore extends StatefulWidget {
     required this.filterQuality,
     required this.disableGestures,
     required this.enablePanAlways,
-  })  : imageProvider = null,
+  })  : imageContainer = null,
+        transform = null,
         gaplessPlayback = false,
         super(key: key);
 
   final Decoration? backgroundDecoration;
-  final ImageProvider? imageProvider;
+  final Widget? imageContainer;
+  final Matrix4? transform;
   final bool? gaplessPlayback;
   final PhotoViewHeroAttributes? heroAttributes;
   final bool enableRotation;
@@ -103,11 +107,7 @@ class PhotoViewCore extends StatefulWidget {
   bool get hasCustomChild => customChild != null;
 }
 
-class PhotoViewCoreState extends State<PhotoViewCore>
-    with
-        TickerProviderStateMixin,
-        PhotoViewControllerDelegate,
-        HitCornersDetector {
+class PhotoViewCoreState extends State<PhotoViewCore> with TickerProviderStateMixin, PhotoViewControllerDelegate, HitCornersDetector {
   Offset? _normalizedPosition;
   double? _scaleBefore;
   double? _rotationBefore;
@@ -118,8 +118,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   late final AnimationController _positionAnimationController;
   Animation<Offset>? _positionAnimation;
 
-  late final AnimationController _rotationAnimationController =
-      AnimationController(vsync: this)..addListener(handleRotationAnimation);
+  late final AnimationController _rotationAnimationController = AnimationController(vsync: this)..addListener(handleRotationAnimation);
   Animation<double>? _rotationAnimation;
 
   PhotoViewHeroAttributes? get heroAttributes => widget.heroAttributes;
@@ -155,11 +154,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
     updateMultiple(
       scale: newScale,
-      position: widget.enablePanAlways
-          ? delta
-          : clampPosition(position: delta * details.scale),
-      rotation:
-          widget.enableRotation ? _rotationBefore! + details.rotation : null,
+      position: widget.enablePanAlways ? delta : clampPosition(position: delta * details.scale),
+      rotation: widget.enableRotation ? _rotationBefore! + details.rotation : null,
       rotationFocusPoint: widget.enableRotation ? details.focalPoint : null,
     );
   }
@@ -225,16 +221,14 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void animatePosition(Offset from, Offset to) {
-    _positionAnimation = Tween<Offset>(begin: from, end: to)
-        .animate(_positionAnimationController);
+    _positionAnimation = Tween<Offset>(begin: from, end: to).animate(_positionAnimationController);
     _positionAnimationController
       ..value = 0.0
       ..fling(velocity: 0.4);
   }
 
   void animateRotation(double from, double to) {
-    _rotationAnimation = Tween<double>(begin: from, end: to)
-        .animate(_rotationAnimationController);
+    _rotationAnimation = Tween<double>(begin: from, end: to).animate(_rotationAnimationController);
     _rotationAnimationController
       ..value = 0.0
       ..fling(velocity: 0.4);
@@ -248,8 +242,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   /// Check if scale is equal to initial after scale animation update
   void onAnimationStatusCompleted() {
-    if (scaleStateController.scaleState != PhotoViewScaleState.initial &&
-        scale == scaleBoundaries.initialScale) {
+    if (scaleStateController.scaleState != PhotoViewScaleState.initial && scale == scaleBoundaries.initialScale) {
       scaleStateController.setInvisibly(PhotoViewScaleState.initial);
     }
   }
@@ -265,8 +258,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _scaleAnimationController = AnimationController(vsync: this)
       ..addListener(handleScaleAnimation)
       ..addStatusListener(onAnimationStatus);
-    _positionAnimationController = AnimationController(vsync: this)
-      ..addListener(handlePositionAnimate);
+    _positionAnimationController = AnimationController(vsync: this)..addListener(handlePositionAnimate);
   }
 
   void animateOnScaleStateUpdate(double prevScale, double nextScale) {
@@ -328,9 +320,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
             );
 
             final child = Container(
-              constraints: widget.tightMode
-                  ? BoxConstraints.tight(scaleBoundaries.childSize * scale)
-                  : null,
+              constraints: widget.tightMode ? BoxConstraints.tight(scaleBoundaries.childSize * scale) : null,
               child: Center(
                 child: Transform(
                   child: customChildLayout,
@@ -344,24 +334,27 @@ class PhotoViewCoreState extends State<PhotoViewCore>
             if (widget.disableGestures) {
               return child;
             }
-
-            return GestureDetector(
-              onTap: widget.onTapOutside,
-              child: Container(
-                decoration: BoxDecoration(),
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    alignment: Alignment.center,
-                    child: PhotoViewGestureDetector(
-                      child: child,
-                      onDoubleTap: nextScaleState,
-                      onScaleStart: onScaleStart,
-                      onScaleUpdate: onScaleUpdate,
-                      onScaleEnd: onScaleEnd,
-                      hitDetector: this,
-                      onTapUp: widget.onTapUp != null ? (details) => widget.onTapUp!(context, details, value) : null,
-                      onTapDown: widget.onTapDown != null ? (details) => widget.onTapDown!(context, details, value) : null,
+            return Transform(
+              transform: widget.transform ?? Matrix4.identity(),
+              alignment: Alignment.center,
+              child: GestureDetector(
+                onTap: widget.onTapOutside,
+                child: Container(
+                  decoration: BoxDecoration(),
+                  child: GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: PhotoViewGestureDetector(
+                        child: child,
+                        onDoubleTap: nextScaleState,
+                        onScaleStart: onScaleStart,
+                        onScaleUpdate: onScaleUpdate,
+                        onScaleEnd: onScaleEnd,
+                        hitDetector: this,
+                        onTapUp: widget.onTapUp != null ? (details) => widget.onTapUp!(context, details, value) : null,
+                        onTapDown: widget.onTapDown != null ? (details) => widget.onTapDown!(context, details, value) : null,
+                      ),
                     ),
                   ),
                 ),
@@ -389,13 +382,20 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   Widget _buildChild() {
     return widget.hasCustomChild
         ? widget.customChild!
-        : Image(
-            image: widget.imageProvider!,
-            gaplessPlayback: widget.gaplessPlayback ?? false,
-            filterQuality: widget.filterQuality,
+        : Container(
+            color: Color.fromARGB(255, 255, 0, 0),
             width: scaleBoundaries.childSize.width * scale,
-            fit: BoxFit.contain,
+            child: widget.imageContainer,
           );
+    // Image(
+    //     image: widget.imageProvider!,
+    //     gaplessPlayback: widget.gaplessPlayback ?? false,
+    //     filterQuality: widget.filterQuality,
+    //     width: scaleBoundaries.childSize.width * scale,
+    //     fit: BoxFit.contain,
+    //     color: Color.fromARGB(255, 127, 127, 127),
+    //     colorBlendMode: BlendMode.color,
+    //   );
   }
 }
 
@@ -425,9 +425,7 @@ class _CenterWithOriginalSizeDelegate extends SingleChildLayoutDelegate {
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
-    return useImageScale
-        ? const BoxConstraints()
-        : BoxConstraints.tight(subjectSize);
+    return useImageScale ? const BoxConstraints() : BoxConstraints.tight(subjectSize);
   }
 
   @override
@@ -445,6 +443,5 @@ class _CenterWithOriginalSizeDelegate extends SingleChildLayoutDelegate {
           useImageScale == other.useImageScale;
 
   @override
-  int get hashCode =>
-      subjectSize.hashCode ^ basePosition.hashCode ^ useImageScale.hashCode;
+  int get hashCode => subjectSize.hashCode ^ basePosition.hashCode ^ useImageScale.hashCode;
 }

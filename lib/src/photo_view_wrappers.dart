@@ -8,7 +8,9 @@ import 'utils/photo_view_utils.dart';
 class ImageWrapper extends StatefulWidget {
   const ImageWrapper({
     Key? key,
+    required this.imageContainer,
     required this.imageProvider,
+    this.transform,
     required this.loadingBuilder,
     required this.backgroundDecoration,
     required this.gaplessPlayback,
@@ -35,7 +37,9 @@ class ImageWrapper extends StatefulWidget {
     required this.enablePanAlways,
   }) : super(key: key);
 
+  final Widget imageContainer;
   final ImageProvider imageProvider;
+  final Matrix4? transform;
   final LoadingBuilder? loadingBuilder;
   final ImageErrorWidgetBuilderWithReload? errorBuilder;
   final BoxDecoration backgroundDecoration;
@@ -92,14 +96,14 @@ class _ImageWrapperState extends State<ImageWrapper> {
   @override
   void didUpdateWidget(ImageWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.imageProvider != oldWidget.imageProvider) {
+    if ((widget.imageProvider) != (oldWidget.imageProvider)) {
       _resolveImage();
     }
   }
 
   // retrieve image from the provider
   void _resolveImage() {
-    final ImageStream newStream = widget.imageProvider.resolve(
+    final ImageStream newStream = (widget.imageProvider).resolve(
       const ImageConfiguration(),
     );
     _updateSourceStream(newStream);
@@ -112,7 +116,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
       _lastStack = null;
     });
     //移除图片
-    await widget.imageProvider.evict();
+    await (widget.imageProvider).evict();
     //延迟2s后重新加载图片
     await Future.delayed(Duration(seconds: 1));
     _resolveImage();
@@ -195,7 +199,8 @@ class _ImageWrapperState extends State<ImageWrapper> {
     );
 
     return PhotoViewCore(
-      imageProvider: widget.imageProvider,
+      imageContainer: widget.imageContainer!,
+      transform: widget.transform,
       backgroundDecoration: widget.backgroundDecoration,
       gaplessPlayback: widget.gaplessPlayback,
       enableRotation: widget.enableRotation,
