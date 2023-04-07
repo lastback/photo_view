@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../photo_view.dart';
+import '../photo_view_gallery.dart';
 import 'core/photo_view_core.dart';
 import 'photo_view_default_widgets.dart';
 import 'utils/photo_view_utils.dart';
@@ -8,9 +9,7 @@ import 'utils/photo_view_utils.dart';
 class ImageWrapper extends StatefulWidget {
   const ImageWrapper({
     Key? key,
-    required this.imageContainer,
-    required this.imageProvider,
-    this.transform,
+    required this.image,
     required this.loadingBuilder,
     required this.backgroundDecoration,
     required this.gaplessPlayback,
@@ -37,9 +36,7 @@ class ImageWrapper extends StatefulWidget {
     required this.enablePanAlways,
   }) : super(key: key);
 
-  final Widget imageContainer;
-  final ImageProvider imageProvider;
-  final Matrix4? transform;
+  final PhotoViewImage image;
   final LoadingBuilder? loadingBuilder;
   final ImageErrorWidgetBuilderWithReload? errorBuilder;
   final BoxDecoration backgroundDecoration;
@@ -96,14 +93,14 @@ class _ImageWrapperState extends State<ImageWrapper> {
   @override
   void didUpdateWidget(ImageWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if ((widget.imageProvider) != (oldWidget.imageProvider)) {
+    if ((widget.image.provider) != (oldWidget.image.provider)) {
       _resolveImage();
     }
   }
 
   // retrieve image from the provider
   void _resolveImage() {
-    final ImageStream newStream = (widget.imageProvider).resolve(
+    final ImageStream newStream = (widget.image.provider).resolve(
       const ImageConfiguration(),
     );
     _updateSourceStream(newStream);
@@ -116,7 +113,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
       _lastStack = null;
     });
     //移除图片
-    await (widget.imageProvider).evict();
+    await (widget.image.provider).evict();
     //延迟2s后重新加载图片
     await Future.delayed(Duration(seconds: 1));
     _resolveImage();
@@ -199,8 +196,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
     );
 
     return PhotoViewCore(
-      imageContainer: widget.imageContainer!,
-      transform: widget.transform,
+      image: widget.image,
       backgroundDecoration: widget.backgroundDecoration,
       gaplessPlayback: widget.gaplessPlayback,
       enableRotation: widget.enableRotation,

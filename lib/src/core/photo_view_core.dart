@@ -14,6 +14,7 @@ import 'package:photo_view/src/controller/photo_view_scalestate_controller.dart'
 import 'package:photo_view/src/core/photo_view_gesture_detector.dart';
 import 'package:photo_view/src/core/photo_view_hit_corners.dart';
 import 'package:photo_view/src/utils/photo_view_utils.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 
 const _defaultDecoration = const BoxDecoration(
   color: const Color.fromRGBO(0, 0, 0, 1.0),
@@ -24,8 +25,7 @@ const _defaultDecoration = const BoxDecoration(
 class PhotoViewCore extends StatefulWidget {
   const PhotoViewCore({
     Key? key,
-    required this.imageContainer,
-    required this.transform,
+    required this.image,
     required this.backgroundDecoration,
     required this.gaplessPlayback,
     required this.heroAttributes,
@@ -67,14 +67,12 @@ class PhotoViewCore extends StatefulWidget {
     required this.filterQuality,
     required this.disableGestures,
     required this.enablePanAlways,
-  })  : imageContainer = null,
-        transform = null,
-        gaplessPlayback = false,
+  })  : gaplessPlayback = false,
+        image = null,
         super(key: key);
 
   final Decoration? backgroundDecoration;
-  final Widget? imageContainer;
-  final Matrix4? transform;
+  final PhotoViewImage? image;
   final bool? gaplessPlayback;
   final PhotoViewHeroAttributes? heroAttributes;
   final bool enableRotation;
@@ -331,34 +329,52 @@ class PhotoViewCoreState extends State<PhotoViewCore> with TickerProviderStateMi
               decoration: widget.backgroundDecoration ?? _defaultDecoration,
             );
 
-            if (widget.disableGestures) {
-              return child;
+            if (widget.disableGestures || widget.image!.locked) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Transform(
+                    transform: widget.image!.transform ?? Matrix4.identity(),
+                    alignment: Alignment.center,
+                    child: child,
+                  ),
+                  widget.image!.netGridPlugin ?? Container(),
+                  widget.image!.editorPlugin ?? Container(),
+                ],
+              );
             }
-            return Transform(
-              transform: widget.transform ?? Matrix4.identity(),
+            return Stack(
               alignment: Alignment.center,
-              child: GestureDetector(
-                onTap: widget.onTapOutside,
-                child: Container(
-                  decoration: BoxDecoration(),
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: PhotoViewGestureDetector(
-                        child: child,
-                        onDoubleTap: nextScaleState,
-                        onScaleStart: onScaleStart,
-                        onScaleUpdate: onScaleUpdate,
-                        onScaleEnd: onScaleEnd,
-                        hitDetector: this,
-                        onTapUp: widget.onTapUp != null ? (details) => widget.onTapUp!(context, details, value) : null,
-                        onTapDown: widget.onTapDown != null ? (details) => widget.onTapDown!(context, details, value) : null,
+              children: [
+                GestureDetector(
+                  onTap: widget.onTapOutside,
+                  child: Container(
+                    decoration: BoxDecoration(),
+                    child: GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        alignment: Alignment.center,
+                        child: Transform(
+                          transform: widget.image!.transform ?? Matrix4.identity(),
+                          alignment: Alignment.center,
+                          child: PhotoViewGestureDetector(
+                            child: child,
+                            onDoubleTap: nextScaleState,
+                            onScaleStart: onScaleStart,
+                            onScaleUpdate: onScaleUpdate,
+                            onScaleEnd: onScaleEnd,
+                            hitDetector: this,
+                            onTapUp: widget.onTapUp != null ? (details) => widget.onTapUp!(context, details, value) : null,
+                            onTapDown: widget.onTapDown != null ? (details) => widget.onTapDown!(context, details, value) : null,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+                widget.image!.netGridPlugin ?? Container(),
+                widget.image!.editorPlugin ?? Container(),
+              ],
             );
           } else {
             return Container();
@@ -383,9 +399,8 @@ class PhotoViewCoreState extends State<PhotoViewCore> with TickerProviderStateMi
     return widget.hasCustomChild
         ? widget.customChild!
         : Container(
-            color: Color.fromARGB(255, 255, 0, 0),
             width: scaleBoundaries.childSize.width * scale,
-            child: widget.imageContainer,
+            child: widget.image!,
           );
     // Image(
     //     image: widget.imageProvider!,

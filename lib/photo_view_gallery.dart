@@ -1,5 +1,6 @@
 library photo_view_gallery;
 
+import 'package:stacked/stacked.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:photo_view/photo_view.dart'
@@ -99,6 +100,29 @@ typedef PhotoViewGalleryBuilder = PhotoViewGalleryPageOptions Function(BuildCont
 ///   onPageChanged: onPageChanged,
 /// )
 /// ```
+
+abstract class PhotoViewImage<T extends ReactiveViewModel> extends StackedView<T> {
+  final Matrix4 transform;
+  final ImageProvider provider;
+
+  ///外挂
+  final Widget? editorPlugin;
+
+  final Widget? netGridPlugin;
+
+  ///是否锁操作
+  final bool locked;
+
+  PhotoViewImage({
+    super.key,
+    required this.transform,
+    required this.provider,
+    this.editorPlugin,
+    this.netGridPlugin,
+    this.locked = false,
+  });
+}
+
 class PhotoViewGallery extends StatefulWidget {
   /// Construct a gallery with static items through a list of [PhotoViewGalleryPageOptions].
   const PhotoViewGallery({
@@ -272,9 +296,7 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
           )
         : PhotoView(
             key: ObjectKey(index),
-            imageContainer: pageOption.imageContainer,
-            imageProvider: pageOption.imageProvider,
-            transform: pageOption.transform,
+            image: pageOption.image,
             loadingBuilder: widget.loadingBuilder,
             backgroundDecoration: widget.backgroundDecoration,
             wantKeepAlive: widget.wantKeepAlive,
@@ -321,9 +343,7 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
 class PhotoViewGalleryPageOptions {
   PhotoViewGalleryPageOptions({
     Key? key,
-    required this.imageContainer,
-    required this.imageProvider,
-    this.transform,
+    required this.image,
     this.heroAttributes,
     this.minScale,
     this.maxScale,
@@ -364,15 +384,13 @@ class PhotoViewGalleryPageOptions {
     this.filterQuality,
     this.disableGestures,
   })  : errorBuilder = null,
-        imageContainer = null,
-        imageProvider = null,
-        transform = null;
+        image = null;
 
   /// Mirror to [PhotoView.imageProvider]
-  final Widget? imageContainer;
-  final ImageProvider? imageProvider;
-
-  final Matrix4? transform;
+  // final Widget? imageContainer;
+  // final ImageProvider? imageProvider;
+  // final Matrix4? transform;
+  final PhotoViewImage? image;
 
   /// Mirror to [PhotoView.heroAttributes]
   final PhotoViewHeroAttributes? heroAttributes;

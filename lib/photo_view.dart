@@ -1,7 +1,7 @@
 library photo_view;
 
 import 'package:flutter/material.dart';
-
+import './photo_view_gallery.dart';
 import 'package:photo_view/src/controller/photo_view_controller.dart';
 import 'package:photo_view/src/controller/photo_view_scalestate_controller.dart';
 import 'package:photo_view/src/core/photo_view_core.dart';
@@ -233,9 +233,7 @@ class PhotoView extends StatefulWidget {
   /// Internally, the image is rendered within an [Image] widget.
   PhotoView({
     Key? key,
-    required this.imageContainer,
-    required this.imageProvider,
-    this.transform,
+    this.image,
     this.loadingBuilder,
     this.backgroundDecoration,
     this.wantKeepAlive = false,
@@ -298,18 +296,14 @@ class PhotoView extends StatefulWidget {
     this.disableGestures,
     this.enablePanAlways,
   })  : errorBuilder = null,
-        imageContainer = null,
-        imageProvider = null,
-        transform = null,
+        image = null,
         gaplessPlayback = false,
         loadingBuilder = null,
         super(key: key);
 
   /// Given a [imageProvider] it resolves into an zoomable image widget using. It
   /// is required
-  final Widget? imageContainer;
-  final ImageProvider? imageProvider;
-  final Matrix4? transform;
+  final PhotoViewImage? image;
 
   /// While [imageProvider] is not resolved, [loadingBuilder] is called by [PhotoView]
   /// into the screen, by default it is a centered [CircularProgressIndicator]
@@ -530,9 +524,7 @@ class _PhotoViewState extends State<PhotoView> with AutomaticKeepAliveClientMixi
                 enablePanAlways: widget.enablePanAlways,
               )
             : ImageWrapper(
-                imageContainer: widget.imageContainer!,
-                imageProvider: widget.imageProvider!,
-                transform: widget.transform,
+                image: widget.image!,
                 loadingBuilder: widget.loadingBuilder,
                 backgroundDecoration: backgroundDecoration,
                 gaplessPlayback: widget.gaplessPlayback,

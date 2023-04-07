@@ -4,12 +4,14 @@ version: 0.13.0
 homepage: https://github.com/renancaraujo/photo_view
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: '>=2.19.0 <3.0.0'
   flutter: ">=1.6.0"
 
 dependencies:
   flutter:
     sdk: flutter
+  stacked: ^3.1.0+3
+  stacked_core: ^1.2.4
 
 dev_dependencies:
   test: ^1.16.0-nullsafety.17
