@@ -94,6 +94,14 @@ class _ImageWrapperState extends State<ImageWrapper> {
   void didUpdateWidget(ImageWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
     if ((widget.image.provider) != (oldWidget.image.provider)) {
+      if (!_loading) {
+        setState(() {
+          _loading = true;
+          _lastException = null;
+          _lastStack = null;
+        });
+      }
+
       _resolveImage();
     }
   }
@@ -187,6 +195,7 @@ class _ImageWrapperState extends State<ImageWrapper> {
     if (_loading) {
       return _buildLoading(context);
     }
+
     final scaleBoundaries = ScaleBoundaries(
       widget.minScale ?? 0.0,
       widget.maxScale ?? double.infinity,
