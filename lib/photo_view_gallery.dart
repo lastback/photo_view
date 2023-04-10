@@ -128,6 +128,7 @@ class PhotoViewGallery extends StatefulWidget {
   const PhotoViewGallery({
     Key? key,
     required this.pageOptions,
+    this.editorPlugin,
     this.loadingBuilder,
     this.backgroundDecoration,
     this.wantKeepAlive = false,
@@ -152,6 +153,7 @@ class PhotoViewGallery extends StatefulWidget {
     Key? key,
     required this.itemCount,
     required this.builder,
+    this.editorPlugin,
     this.loadingBuilder,
     this.backgroundDecoration,
     this.wantKeepAlive = false,
@@ -172,6 +174,9 @@ class PhotoViewGallery extends StatefulWidget {
 
   /// A list of options to describe the items in the gallery
   final List<PhotoViewGalleryPageOptions>? pageOptions;
+
+  ///外挂
+  final Widget Function(BuildContext context, int index)? editorPlugin;
 
   /// The count of items in the gallery, only used when constructed via [PhotoViewGallery.builder]
   final int? itemCount;
@@ -228,6 +233,7 @@ class PhotoViewGallery extends StatefulWidget {
 
 class _PhotoViewGalleryState extends State<PhotoViewGallery> {
   late final PageController _controller = widget.pageController ?? PageController();
+  late int pageIndex = widget.editorPlugin != null ? widget.pageController!.initialPage : 0;
 
   void scaleStateChangedCallback(PhotoViewScaleState scaleState) {
     if (widget.scaleStateChangedCallback != null) {
@@ -251,15 +257,28 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
     // Enable corner hit test
     return PhotoViewGestureDetectorScope(
       axis: widget.scrollDirection,
-      child: PageView.builder(
-        reverse: widget.reverse,
-        controller: _controller,
-        onPageChanged: widget.onPageChanged,
-        itemCount: itemCount,
-        itemBuilder: _buildItem,
-        scrollDirection: widget.scrollDirection,
-        physics: widget.scrollPhysics,
-        allowImplicitScrolling: widget.allowImplicitScrolling,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          PageView.builder(
+            reverse: widget.reverse,
+            controller: _controller,
+            onPageChanged: (int index) {
+              if (widget.onPageChanged != null) {
+                setState(() {
+                  pageIndex = index;
+                });
+                widget.onPageChanged!(index);
+              }
+            },
+            itemCount: itemCount,
+            itemBuilder: _buildItem,
+            scrollDirection: widget.scrollDirection,
+            physics: widget.scrollPhysics,
+            allowImplicitScrolling: widget.allowImplicitScrolling,
+          ),
+          widget.editorPlugin != null ? widget.editorPlugin!(context, pageIndex) : Container(),
+        ],
       ),
     );
   }
@@ -267,7 +286,6 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
   Widget _buildItem(BuildContext context, int index) {
     final pageOption = _buildPageOption(context, index);
     final isCustomChild = pageOption.child != null;
-
     final PhotoView photoView = isCustomChild
         ? PhotoView.customChild(
             key: ObjectKey(index),
