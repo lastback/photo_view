@@ -53,6 +53,10 @@ class PhotoViewScaleStateController {
 
   /// Resets the state to the initial value;
   void reset({void Function()? onFinished}) {
+    if (scaleState == PhotoViewScaleState.initial && onFinished != null) {
+      onFinished();
+      return;
+    }
     finishedFunc = onFinished;
     prevScaleState = scaleState;
     scaleState = PhotoViewScaleState.initial;
