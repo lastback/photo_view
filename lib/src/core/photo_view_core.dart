@@ -243,6 +243,10 @@ class PhotoViewCoreState extends State<PhotoViewCore> with TickerProviderStateMi
     if (scaleStateController.scaleState != PhotoViewScaleState.initial && scale == scaleBoundaries.initialScale) {
       scaleStateController.setInvisibly(PhotoViewScaleState.initial);
     }
+    if (scaleStateController.finishedFunc != null) {
+      scaleStateController.finishedFunc!();
+      scaleStateController.finishedFunc = null;
+    }
   }
 
   @override

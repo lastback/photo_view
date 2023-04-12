@@ -19,22 +19,21 @@ typedef ScaleStateListener = void Function(double prevScale, double nextScale);
 /// The updates should be done via [scaleState] setter and the updated listened via [outputScaleStateStream]
 ///
 class PhotoViewScaleStateController {
-  late final IgnorableValueNotifier<PhotoViewScaleState> _scaleStateNotifier =
-      IgnorableValueNotifier(PhotoViewScaleState.initial)
-        ..addListener(_scaleStateChangeListener);
-  final StreamController<PhotoViewScaleState> _outputScaleStateCtrl =
-      StreamController<PhotoViewScaleState>.broadcast()
-        ..sink.add(PhotoViewScaleState.initial);
+  late final IgnorableValueNotifier<PhotoViewScaleState> _scaleStateNotifier = IgnorableValueNotifier(PhotoViewScaleState.initial)
+    ..addListener(_scaleStateChangeListener);
+  final StreamController<PhotoViewScaleState> _outputScaleStateCtrl = StreamController<PhotoViewScaleState>.broadcast()..sink.add(PhotoViewScaleState.initial);
 
   /// The output for state/value updates
-  Stream<PhotoViewScaleState> get outputScaleStateStream =>
-      _outputScaleStateCtrl.stream;
+  Stream<PhotoViewScaleState> get outputScaleStateStream => _outputScaleStateCtrl.stream;
 
   /// The state value before the last change or the initial state if the state has not been changed.
   PhotoViewScaleState prevScaleState = PhotoViewScaleState.initial;
 
   /// The actual state value
   PhotoViewScaleState get scaleState => _scaleStateNotifier.value;
+
+  ///reset 动画执行完毕的回调
+  void Function()? finishedFunc;
 
   /// Updates scaleState and notify all listeners (and the stream)
   set scaleState(PhotoViewScaleState newValue) {
@@ -50,12 +49,11 @@ class PhotoViewScaleStateController {
   bool get hasChanged => prevScaleState != scaleState;
 
   /// Check if is `zoomedIn` & `zoomedOut`
-  bool get isZooming =>
-      scaleState == PhotoViewScaleState.zoomedIn ||
-      scaleState == PhotoViewScaleState.zoomedOut;
+  bool get isZooming => scaleState == PhotoViewScaleState.zoomedIn || scaleState == PhotoViewScaleState.zoomedOut;
 
   /// Resets the state to the initial value;
-  void reset() {
+  void reset({void Function()? onFinished}) {
+    finishedFunc = onFinished;
     prevScaleState = scaleState;
     scaleState = PhotoViewScaleState.initial;
   }
