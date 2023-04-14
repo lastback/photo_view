@@ -325,7 +325,11 @@ class PhotoViewCoreState extends State<PhotoViewCore> with TickerProviderStateMi
               constraints: widget.tightMode ? BoxConstraints.tight(scaleBoundaries.childSize * scale) : null,
               child: Center(
                 child: Transform(
-                  child: customChildLayout,
+                  child: Transform(
+                    child: customChildLayout,
+                    alignment: Alignment.center,
+                    transform: widget.image!.transform ?? Matrix4.identity(),
+                  ),
                   transform: matrix,
                   alignment: basePosition,
                 ),
@@ -337,11 +341,7 @@ class PhotoViewCoreState extends State<PhotoViewCore> with TickerProviderStateMi
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  Transform(
-                    transform: widget.image!.transform ?? Matrix4.identity(),
-                    alignment: Alignment.center,
-                    child: child,
-                  ),
+                  child,
                   widget.image!.netGridPlugin ?? Container(),
                   widget.image!.editorPlugin ?? Container(),
                 ],
@@ -354,23 +354,19 @@ class PhotoViewCoreState extends State<PhotoViewCore> with TickerProviderStateMi
                   onTap: widget.onTapOutside,
                   child: Container(
                     decoration: BoxDecoration(),
-                    child: GestureDetector(
-                      onTap: () {},
-                      child: Container(
-                        alignment: Alignment.center,
-                        child: Transform(
-                          transform: widget.image!.transform ?? Matrix4.identity(),
-                          alignment: Alignment.center,
-                          child: PhotoViewGestureDetector(
-                            child: child,
-                            onDoubleTap: nextScaleState,
-                            onScaleStart: onScaleStart,
-                            onScaleUpdate: onScaleUpdate,
-                            onScaleEnd: onScaleEnd,
-                            hitDetector: this,
-                            onTapUp: widget.onTapUp != null ? (details) => widget.onTapUp!(context, details, value) : null,
-                            onTapDown: widget.onTapDown != null ? (details) => widget.onTapDown!(context, details, value) : null,
-                          ),
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: GestureDetector(
+                        onTap: () {},
+                        child: PhotoViewGestureDetector(
+                          child: child,
+                          onDoubleTap: nextScaleState,
+                          onScaleStart: onScaleStart,
+                          onScaleUpdate: onScaleUpdate,
+                          onScaleEnd: onScaleEnd,
+                          hitDetector: this,
+                          onTapUp: widget.onTapUp != null ? (details) => widget.onTapUp!(context, details, value) : null,
+                          onTapDown: widget.onTapDown != null ? (details) => widget.onTapDown!(context, details, value) : null,
                         ),
                       ),
                     ),
